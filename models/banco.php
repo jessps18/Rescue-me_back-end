@@ -49,6 +49,47 @@ class Pessoa //feito
                     ON p.id_pessoa = f.pessoa_id
             ")->fetch_all(MYSQLI_ASSOC);
     }
+
+    public static function login($conn, $data)
+    {
+        $stmt = $conn->prepare("
+            SELECT
+                p.id_pessoa,
+                p.email,
+                p.senha,
+                p.tipo,
+                u.registro_academico,
+            FROM pessoas p
+            LEFT JOIN usuarios u
+                ON p.id_pessoa = u.pessoa_id
+            WHERE
+                p.email = ?
+                OR u.registro_academico = ?
+        ");
+
+        $stmt->bind_param(
+            "ss",
+            $data['login'],
+            $data['login']
+        );
+
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $usuario = $result->fetch_assoc();
+
+        if (!$usuario) {
+            return ["error" => "Usuário não encontrado"];
+        }
+
+        if (!password_verify($data['senha'], $usuario['senha'])) {
+            return ["error" => "Senha inválida"];
+        }
+
+        unset($usuario['senha']);
+
+        return $usuario;
+    }
 }
 
 class Usuario //feito
@@ -241,7 +282,7 @@ class Objeto //feito
     }
 }
 
-class Denuncias  //get especifico
+class Denuncias  //feito
 {
     public static function create($conn, $data)
     {
@@ -362,5 +403,23 @@ class Denuncias  //get especifico
         return $stmt
             ->get_result()
             ->fetch_assoc();
+    }
+}
+
+class Materias
+{
+    public static function all($conn)
+    {
+        return $conn->query("
+
+        SELECT
+            id_curso,
+            nome_curso
+
+        FROM cursos
+
+        ORDER BY id_curso
+
+        ")->fetch_all(MYSQLI_ASSOC);
     }
 }
