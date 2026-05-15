@@ -1,0 +1,121 @@
+CREATE DATABASE rescueme;
+USE rescueme;
+
+CREATE TABLE cursos (
+    id_curso INT AUTO_INCREMENT PRIMARY KEY,
+    nome_curso VARCHAR(150) NOT NULL UNIQUE
+);
+
+CREATE TABLE pessoas (
+    id_pessoa INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(70) NOT NULL UNIQUE,
+    senha VARCHAR(255) NOT NULL,
+    numero_contato VARCHAR(20) NOT NULL,
+    tipo ENUM('USUARIO', 'FUNCIONARIO') NOT NULL
+);
+
+CREATE TABLE usuarios (
+    id_usuario INT AUTO_INCREMENT PRIMARY KEY,
+    pessoa_id INT NOT NULL UNIQUE,
+    registro_academico int (9) NOT NULL UNIQUE,
+    curso_id INT NOT NULL,
+    
+    FOREIGN KEY (pessoa_id)
+        REFERENCES pessoas(id_pessoa),
+
+    FOREIGN KEY (curso_id)
+        REFERENCES cursos(id_curso)
+);
+
+CREATE TABLE funcionarios (
+    id_funcionario INT AUTO_INCREMENT PRIMARY KEY,
+    pessoa_id INT NOT NULL UNIQUE,
+    cargo VARCHAR(100),
+    
+    FOREIGN KEY (pessoa_id)
+        REFERENCES pessoas(id_pessoa)
+);
+
+CREATE TABLE objetos (
+    id_objeto INT AUTO_INCREMENT PRIMARY KEY,
+    nome_objeto VARCHAR(200) NOT NULL,
+    descricao TEXT NOT NULL,
+    local_encontrado VARCHAR(200) NOT NULL,
+    onde_deixou VARCHAR(300) NOT NULL,
+    data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+    encontrado_por INT NOT NULL,
+    recuperado_por INT,
+    data_recuperacao DATETIME,
+    ja_recuperado BOOLEAN DEFAULT FALSE,
+    
+    FOREIGN KEY (encontrado_por)
+        REFERENCES pessoas(id_pessoa),
+
+    FOREIGN KEY (recuperado_por)
+        REFERENCES pessoas(id_pessoa)
+);
+
+CREATE TABLE denuncias (
+    id_denuncia INT AUTO_INCREMENT PRIMARY KEY,
+    titulo TEXT NOT NULL,
+    descricao TEXT NOT NULL,
+    objeto_id INT NOT NULL,
+    denunciante INT NOT NULL,
+    denunciado INT NOT NULL,
+    status_denuncia ENUM(
+        'PENDENTE',
+        'EM_ANALISE',
+        'RESOLVIDA',
+        'RECUSADA'
+    ) DEFAULT 'PENDENTE',
+
+    justificativa TEXT,
+    analisado_por INT,
+    data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+    data_resposta DATETIME,
+
+    FOREIGN KEY (objeto_id)
+        REFERENCES objetos(id_objeto),
+
+    FOREIGN KEY (denunciante)
+        REFERENCES pessoas(id_pessoa),
+
+    FOREIGN KEY (denunciado)
+        REFERENCES pessoas(id_pessoa),
+
+    FOREIGN KEY (analisado_por)
+        REFERENCES pessoas(id_pessoa)
+);
+
+INSERT INTO cursos (nome_curso) VALUES
+('ADS'),
+('Engenharia de Software'),
+('Ciência da Computação');
+
+
+INSERT INTO pessoas (nome, email, senha, numero_contato, tipo) VALUES
+('Jessica Pereira', 'jessica@email.com', '123456', '11999999999', 'USUARIO'),
+('Lucas Silva', 'lucas@email.com', '123456', '11988888888', 'USUARIO'),
+('Mariana Souza', 'mariana@email.com', '123456', '11977777777', 'USUARIO'),
+('Carlos Mendes', 'carlos@empresa.com', '123456', '11966666666', 'FUNCIONARIO'),
+('Fernanda Alves', 'fernanda@empresa.com', '123456', '11955555555', 'FUNCIONARIO');
+
+INSERT INTO usuarios (pessoa_id, registro_academico, curso_id) VALUES
+(1, 123456789, 1),
+(2, 987654321, 2),
+(3, 456123789, 3);
+
+INSERT INTO funcionarios (pessoa_id, cargo) VALUES
+(4, 'Administrador'),
+(5, 'Atendente');
+
+INSERT INTO objetos (nome_objeto, descricao, local_encontrado, onde_deixou, encontrado_por, recuperado_por, data_recuperacao, ja_recuperado) VALUES
+('Carteira', 'Carteira preta com documentos', 'Biblioteca', 'Achados e Perdidos', 1, 2, NOW(), TRUE),
+('Celular', 'iPhone 11 azul', 'Sala 203', 'Secretaria', 4, NULL, NULL, FALSE),
+('Mochila', 'Mochila preta com cadernos', 'Pátio', 'Coordenação', 3, 5, NOW(), TRUE);
+
+INSERT INTO denuncias (titulo, descricao, objeto_id, denunciante, denunciado, status_denuncia, justificativa, analisado_por, data_resposta) VALUES
+('Objeto não devolvido corretamente', 'quando fui ao achaados e perdidos não encontrei minha carteira', 1, 2, 1, 'EM_ANALISE', 'A denúncia está sendo analisada pela equipe.', 4, NOW()),
+('Funcionário não registrou o objeto', 'o funcionario não atualizou o objeto para achado', 2, 5, 4, 'PENDENTE', NULL, NULL, NULL),
+('Suspeita de uso indevido do objeto', 'quando fui pegar minha mochila de volta, estava bagunçada e suja, alguem usou ela', 3, 3, 5, 'RESOLVIDA', 'Após análise, o objeto foi devolvido corretamente.', 4, NOW());
